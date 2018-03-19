@@ -252,7 +252,7 @@ void SoftwareRendererImp::rasterize_line(float x0, float y0,
   int dx = x1 - x0;
   int dy = y1 - y0;
   if (abs(x1 - x0) < 0.001) {
-    if(y0 > y1){
+    if (y0 > y1) {
       swap(y0, y1);
     }
     for (int i = y0; i <= y1; i++) {
@@ -261,7 +261,7 @@ void SoftwareRendererImp::rasterize_line(float x0, float y0,
     return;
   }
   if (dy == 0) {
-    if(x0 > x1){
+    if (x0 > x1) {
       swap(x0, x1);
     }
     for (int i = x0; i <= x1; i++) {
@@ -321,13 +321,35 @@ void SoftwareRendererImp::rasterize_line(float x0, float y0,
   }
 }
 
+static float dotProduct(float x0, float y0, float x1, float y1) {
+  return x0 * x1 + y0 * y1;
+}
+
 void SoftwareRendererImp::rasterize_triangle(float x0, float y0,
                                              float x1, float y1,
                                              float x2, float y2,
                                              Color color) {
   // Task 3: 
   // Implement triangle rasterization
+  Vector2D BA(x1 - x0, y1 - y0);//v0
+  Vector2D CA(x2 - x0, y2 - y0);//v1
+  double dot00 = dot(BA, BA);
+  double dot01 = dot(BA, CA);
+  double dot11 = dot(CA, CA);
 
+  for (int i = 0; i < target_w; i++) {
+    for (int j = 0; j < target_h; j++) {
+      Vector2D PA(0.5f + i - x0, 0.5f + j - y0);
+      double dot02 = dot(BA, PA);
+      double dot12 = dot(CA, PA);
+      double b = 1.0 / (dot00 * dot11 - dot01 * dot01);
+      double u = (dot11 * dot02 - dot01 * dot12) * b;
+      double v = (dot00 * dot12 - dot01 * dot02) * b;
+      if (u >= 0 && v >= 0 && u + v < 1) {
+        rasterize_point(i, j, color);
+      }
+    }
+  }
 }
 
 void SoftwareRendererImp::rasterize_image(float x0, float y0,
