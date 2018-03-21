@@ -52,8 +52,18 @@ void SoftwareRendererImp::set_sample_rate(size_t sample_rate) {
 
   // Task 4: 
   // You may want to modify this for supersampling support
+  if (sample_rate == this->sample_rate) {
+    return;
+  }
   this->sample_rate = sample_rate;
-
+//  double v = sample_rate * 1.0 / this->sample_rate;
+//  vector<double> tmp(9);
+//  tmp[0] = v;
+//  tmp[4] = v;
+//  tmp[8] = 1;
+//  Matrix3x3 m(tmp.data());
+//  this->transformation = m * this->transformation;
+  reset_buffer();
 }
 
 void SoftwareRendererImp::set_render_target(unsigned char *render_target,
@@ -65,8 +75,26 @@ void SoftwareRendererImp::set_render_target(unsigned char *render_target,
   this->target_w = width;
   this->target_h = height;
 
+  reset_buffer();
 }
 
+void SoftwareRendererImp::reset_buffer() {
+  if (sample_rate == 1) {
+    this->tmp_render_target = this->render_target;
+    this->tmp_target_h = this->target_h;
+    this->tmp_target_w = this->target_w;
+  } else {
+    this->tmp_target_w = sample_rate * this->target_w;
+    this->tmp_target_h = sample_rate * this->target_h;
+    if (this->tmp_render_target != this->render_target) {
+      delete (this->tmp_render_target);
+    }
+    this->tmp_render_target = new unsigned char[4 * this->tmp_target_h * this->tmp_target_w];
+    for (int i = 0; i < 4 * this->tmp_target_h * this->tmp_target_w; i++) {
+      this->tmp_render_target[i] = 0;
+    }
+  }
+}
 void SoftwareRendererImp::draw_element(SVGElement *element) {
 
   // Task 5 (part 1):
@@ -221,21 +249,23 @@ void SoftwareRendererImp::draw_group(Group &group) {
 
 void SoftwareRendererImp::rasterize_point(float x, float y, Color color) {
 
+  x *= sample_rate;
+  y *= sample_rate;
   // fill in the nearest pixel
   int sx = (int) floor(x);
   int sy = (int) floor(y);
 
   // check bounds
-  if (sx < 0 || sx >= target_w)
+  if (sx < 0 || sx >= tmp_target_w)
     return;
-  if (sy < 0 || sy >= target_h)
+  if (sy < 0 || sy >= tmp_target_h)
     return;
 
   // fill sample - NOT doing alpha blending!
-  render_target[4 * (sx + sy * target_w)] = (uint8_t) (color.r * 255);
-  render_target[4 * (sx + sy * target_w) + 1] = (uint8_t) (color.g * 255);
-  render_target[4 * (sx + sy * target_w) + 2] = (uint8_t) (color.b * 255);
-  render_target[4 * (sx + sy * target_w) + 3] = (uint8_t) (color.a * 255);
+  tmp_render_target[4 * (sx + sy * tmp_target_w)] = (uint8_t) (color.r * 255);
+  tmp_render_target[4 * (sx + sy * tmp_target_w) + 1] = (uint8_t) (color.g * 255);
+  tmp_render_target[4 * (sx + sy * tmp_target_w) + 2] = (uint8_t) (color.b * 255);
+  tmp_render_target[4 * (sx + sy * tmp_target_w) + 3] = (uint8_t) (color.a * 255);
 
 }
 
@@ -321,10 +351,6 @@ void SoftwareRendererImp::rasterize_line(float x0, float y0,
   }
 }
 
-static float dotProduct(float x0, float y0, float x1, float y1) {
-  return x0 * x1 + y0 * y1;
-}
-
 void SoftwareRendererImp::rasterize_triangle(float x0, float y0,
                                              float x1, float y1,
                                              float x2, float y2,
@@ -337,8 +363,8 @@ void SoftwareRendererImp::rasterize_triangle(float x0, float y0,
   double dot01 = dot(BA, CA);
   double dot11 = dot(CA, CA);
 
-  for (int i = 0; i < target_w; i++) {
-    for (int j = 0; j < target_h; j++) {
+  for (int j = 0; j < tmp_target_h; j++) {
+    for (int i = 0; i < tmp_target_w; i++) {
       Vector2D PA(0.5f + i - x0, 0.5f + j - y0);
       double dot02 = dot(BA, PA);
       double dot12 = dot(CA, PA);
@@ -366,6 +392,33 @@ void SoftwareRendererImp::resolve(void) {
   // Task 4: 
   // Implement supersampling
   // You may also need to modify other functions marked with "Task 4".
+  if (sample_rate == 1) {
+    return;
+  }
+  for (int j = 0; j < this->target_h; j++) {
+    for (int i = 0; i < this->target_w; i++) {
+      int cnt = 0;
+      int color = 0;
+      for (int n = j * this->sample_rate; n < (j + 1) * this->sample_rate;
+           n++) {
+        for (int m = i * this->sample_rate; m < (i + 1) * this->sample_rate;
+             m++) {
+
+          //i don't know how to deal with multi color in one sample point for now
+          //assume that there is only one kind of color
+          auto idx = 4 * (n * this->tmp_target_w + m);
+          cnt += this->tmp_render_target[idx + 3];
+          int c = (int) this->tmp_render_target[idx];
+          if (c > 0) {
+            color = c;
+          }
+        }
+      }
+      cnt /= 1.0 * sample_rate * sample_rate;
+      *(int *) &this->render_target[4 * (j * this->target_w + i)] = color;
+      *(int *) &this->render_target[4 * (j * this->target_w + i) + 3] = cnt;
+    }
+  }
   return;
 
 }

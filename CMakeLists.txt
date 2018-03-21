@@ -8,8 +8,9 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules/")
 # Build options
 #-------------------------------------------------------------------------------
 option(BUILD_LIBCMU462 "Build with libCMU462"         ON)
-option(BUILD_DEBUG     "Build with debug settings"    OFF)
+option(BUILD_DEBUG     "Build with debug settings"    ON)
 option(BUILD_DOCS      "Build documentation"          OFF)
+set(BUILD_DEBUG ON)
 
 #-------------------------------------------------------------------------------
 # Platform-specific settings
@@ -102,6 +103,14 @@ if(LINUX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_CXX_FLAGS}")
 
   endif()
+#MESSAGE(${CMAKE_CXX_FLAGS})
+#MESSAGE(${BUILD_DEBUG})
+#      message(${BUILD_DEBUG} STREQUAL "ON")
+#        if(${BUILD_DEBUG} STREQUAL "ON")
+#        MESSAGE(“444”)
+#        else()
+#        MESSAGE(“555”)
+#        endif()
 
 endif(LINUX)
 
