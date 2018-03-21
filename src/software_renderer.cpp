@@ -414,9 +414,9 @@ void SoftwareRendererImp::resolve(void) {
           }
         }
       }
-      cnt /= 1.0 * sample_rate * sample_rate;
+//      cnt /= 1.0 * sample_rate * sample_rate;
       *(int *) &this->render_target[4 * (j * this->target_w + i)] = color;
-      *(int *) &this->render_target[4 * (j * this->target_w + i) + 3] = cnt;
+      *(int *) &this->render_target[4 * (j * this->target_w + i) + 3] = cnt & 0xff;
     }
   }
   return;
