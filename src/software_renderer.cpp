@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <assert.h>
 
 #include "triangulation.h"
 
@@ -11,13 +12,44 @@ using namespace std;
 
 namespace CMU462 {
 
-
 // Implements SoftwareRenderer //
 
-void SoftwareRendererImp::draw_svg(SVG &svg) {
+//if transform matrix is changed, reference render breaks.
+//all right, I'll make a copy and modify it.
+static void shift(SVGElement *element, Matrix3x3 matrix3x3, SVGElement *ref) {
+  if (element == nullptr) {
+    return;
+  }
+//  assert(element->type == ref->type);
+//  assert(element->transform == ref->transform);
+  if (element->type == GROUP) {
+    Group *g = dynamic_cast<Group *>(element);
+    assert(g != nullptr);
+    matrix3x3 = matrix3x3 * g->transform;
+    for (int i = 0; i < g->elements.size(); i++) {
+      shift(g->elements[i], matrix3x3, ((Group *) ref)->elements[i]);
+    }
+    return;
+  }
+  element->transform = matrix3x3 * element->transform;
+  //transform to canvas coordinates
+  //every method in draw_XXXX performed transformation from canvas to screen
+  element->applyTransformation();
+}
+
+void SoftwareRendererImp::draw_svg(SVG &originalSVG) {
 
   // set top level transformation
   transformation = canvas_to_screen;
+
+  // do transformation
+  // instrument code consider the param unchanged across calls as it pass the same param to this and ref render
+  // so I make a copy here.
+  SVG svg = originalSVG;
+  for (int i = 0; i < svg.elements.size(); i++) {
+    shift(svg.elements[i], Matrix3x3::identity(), originalSVG.elements[i]);
+  }
+
 
   // draw all elements
   for (size_t i = 0; i < svg.elements.size(); ++i) {
@@ -95,6 +127,7 @@ void SoftwareRendererImp::reset_buffer() {
     }
   }
 }
+
 void SoftwareRendererImp::draw_element(SVGElement *element) {
 
   // Task 5 (part 1):
