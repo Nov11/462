@@ -18,7 +18,7 @@ class SVGRenderer {
   virtual ~SVGRenderer() { }
 
   // Draw an svg file
-  virtual void draw_svg( SVG& svg ) = 0;
+  virtual void draw_svg(const SVG& svg ) = 0;
 
   // Set viewport
   inline void set_viewport( Viewport* viewport ) {

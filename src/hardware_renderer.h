@@ -22,7 +22,7 @@ class HardwareRenderer : public SVGRenderer {
   void leave2DDrawing();
 
   // Draw an svg input to render target
-  void draw_svg( SVG& svg );
+  void draw_svg(const SVG& svg );
 
   // GL context resize callback 
   void resize(size_t w, size_t h);

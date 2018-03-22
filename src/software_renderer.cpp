@@ -37,7 +37,7 @@ static void shift(SVGElement *element, Matrix3x3 matrix3x3, SVGElement *ref) {
   element->applyTransformation();
 }
 
-void SoftwareRendererImp::draw_svg(SVG &originalSVG) {
+void SoftwareRendererImp::draw_svg(const SVG &originalSVG) {
 
   // set top level transformation
   transformation = canvas_to_screen;

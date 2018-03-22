@@ -47,7 +47,7 @@ void HardwareRenderer::leave2DDrawing() {
 // Implements SoftwareRenderer //
 
 
-void HardwareRenderer::draw_svg(SVG &svg) {
+void HardwareRenderer::draw_svg(const SVG &svg) {
 
   begin2DDrawing();
 

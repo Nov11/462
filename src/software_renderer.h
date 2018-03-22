@@ -19,7 +19,7 @@ public:
   virtual ~SoftwareRenderer() {}
 
   // Draw an svg input to render target
-  virtual void draw_svg(SVG &svg) = 0;
+  virtual void draw_svg(const SVG &svg) = 0;
 
   // Set sample rate
   virtual void set_sample_rate(size_t sample_rate) = 0;
@@ -70,7 +70,7 @@ public:
   SoftwareRendererImp() : SoftwareRenderer() {}
 
   // draw an svg input to render target
-  void draw_svg(SVG &svg);
+  void draw_svg(const SVG &svg);
 
   // set sample rate
   void set_sample_rate(size_t sample_rate);
@@ -150,7 +150,7 @@ public:
   SoftwareRendererRef() : SoftwareRenderer() {}
 
   // draw an svg input to render target
-  void draw_svg(SVG &svg);
+  void draw_svg(const SVG &svg);
 
   // set sample rate
   void set_sample_rate(size_t sample_rate);
